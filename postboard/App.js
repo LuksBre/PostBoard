@@ -1,22 +1,19 @@
+
 import React from 'react';
+import { View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import AppNavigator from './src/navigation/AppNavigator';
- 
+import BannerOffline from './src/components/BannerOffline';
+
 export default function App() {
   return (
-    // NavigationContainer: gerencia todo o estado de navegação
-    // Deve envolver TUDO que usa o React Navigation
     <NavigationContainer>
-      <StatusBar style="light" />
-      <AppNavigator />
+      <View style={{ flex: 1 }}>
+        <StatusBar style="light" />
+        <BannerOffline />
+        <AppNavigator />
+      </View>
     </NavigationContainer>
   );
 }
-import { StyleSheet } from 'react-native';
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-});

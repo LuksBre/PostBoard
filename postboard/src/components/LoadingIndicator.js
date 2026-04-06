@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, ActivityIndicator, Text, StyleSheet } from 'react-native';
- 
-// mensagem: texto opcional abaixo do spinner
+
 export default function LoadingIndicator({ mensagem = 'Carregando...' }) {
   return (
     <View style={styles.container}>
@@ -10,7 +9,7 @@ export default function LoadingIndicator({ mensagem = 'Carregando...' }) {
     </View>
   );
 }
- 
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -24,4 +23,3 @@ const styles = StyleSheet.create({
     color: '#6b7280',
   },
 });
-

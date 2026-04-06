@@ -3,7 +3,8 @@ import {
   View, Text, FlatList, StyleSheet,
   TouchableOpacity, RefreshControl,
 } from 'react-native';
-import { getPostsPorUsuario } from '../services/api';
+import { getPosts } from '../services/api';
+import { salvar, ler, lerMesmoExpirado, CHAVES } from '../storage/cache';
 import PostCard from '../components/PostCard';
 import LoadingIndicator from '../components/LoadingIndicator';
 import EmptyState from '../components/EmptyState';
@@ -13,9 +14,7 @@ export default function FeedScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
-
-  const [page, setPage] = useState(1);
-  const limit = 10;
+  const [fonteOffline, setFonteOffline] = useState(false);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -27,9 +26,8 @@ export default function FeedScreen({ navigation }) {
           <Text style={{ color: '#fff', fontSize: 28, fontWeight: '300' }}>+</Text>
         </TouchableOpacity>
       ),
-      title: `Posts (${posts.length})`
     });
-  }, [navigation, posts]);
+  }, [navigation]);
 
   useEffect(() => {
     carregarPosts();
@@ -39,41 +37,48 @@ export default function FeedScreen({ navigation }) {
     try {
       setLoading(true);
       setErro(null);
-      const dados = await getPostsPorUsuario(1);
-      setPosts(dados.slice(0, limit));
+
+      const cacheValido = await ler(CHAVES.POSTS);
+      if (cacheValido) {
+        setPosts(cacheValido);
+        setFonteOffline(false);
+        setLoading(false);
+        return;
+      }
+
+      const dados = await getPosts();
+      setPosts(dados);
+      await salvar(CHAVES.POSTS, dados);
+      setFonteOffline(false);
     } catch (e) {
-      setErro('Não foi possível carregar os posts.\nVerifique sua conexão.');
+      const cacheAntigo = await lerMesmoExpirado(CHAVES.POSTS);
+      if (cacheAntigo) {
+        setPosts(cacheAntigo);
+        setFonteOffline(true);
+      } else {
+        setErro('Sem conexão e sem dados em cache.\nVerifique sua internet.');
+      }
     } finally {
       setLoading(false);
     }
-  }
-
-  async function carregarMais() {
-    const novaPagina = page + 1;
-    const dados = await getPostsPorUsuario(1);
-    const novos = dados.slice(0, novaPagina * limit);
-
-    setPosts(novos);
-    setPage(novaPagina);
   }
 
   async function onRefresh() {
     try {
       setRefreshing(true);
       setErro(null);
-      const dados = await getPostsPorUsuario(1);
-      setPosts(dados.slice(0, limit));
-      setPage(1);
+      const dados = await getPosts();
+      setPosts(dados);
+      await salvar(CHAVES.POSTS, dados);
+      setFonteOffline(false);
     } catch (e) {
-      setErro('Erro ao atualizar.');
+      setErro('Não foi possível atualizar. Verifique sua conexão.');
     } finally {
       setRefreshing(false);
     }
   }
 
-  if (loading) {
-    return <LoadingIndicator mensagem="Carregando posts..." />;
-  }
+  if (loading) return <LoadingIndicator mensagem="Carregando posts..." />;
 
   if (erro && posts.length === 0) {
     return (
@@ -89,6 +94,13 @@ export default function FeedScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
+      {fonteOffline && (
+        <View style={styles.bannerOffline}>
+          <Text style={styles.bannerTexto}>
+            📡 Sem internet --- exibindo dados salvos anteriormente
+          </Text>
+        </View>
+      )}
       <FlatList
         data={posts}
         keyExtractor={(item) => String(item.id)}
@@ -98,24 +110,39 @@ export default function FeedScreen({ navigation }) {
             onPress={() => navigation.navigate('Detalhes', { post: item })}
           />
         )}
-        ListFooterComponent={
-          <TouchableOpacity onPress={carregarMais} style={{ padding: 16 }}>
-            <Text style={{ textAlign: 'center', color: '#1a56db' }}>
-              Carregar mais
-            </Text>
-          </TouchableOpacity>
+        ListEmptyComponent={
+          <EmptyState icone="📭" titulo="Nenhum post encontrado" mensagem="A lista está vazia." />
         }
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
+            colors={['#1a56db']}
+            tintColor="#1a56db"
           />
         }
-        contentContainerStyle={
-          posts.length === 0 ? styles.listaVazia : styles.lista
-        }
-        ItemSeparatorComponent={() => <View style={styles.separador} />}
+        contentContainerStyle={posts.length === 0 ? styles.listaVazia : styles.lista}
+        ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
       />
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#f3f4f6' },
+  lista: { padding: 16, paddingBottom: 32 },
+  listaVazia: { flex: 1, justifyContent: 'center' },
+  bannerOffline: {
+    backgroundColor: '#fef3c7',
+    borderBottomWidth: 1,
+    borderBottomColor: '#fcd34d',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  bannerTexto: {
+    fontSize: 13,
+    color: '#92400e',
+    textAlign: 'center',
+    fontWeight: '500',
+  },
+});

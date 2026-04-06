@@ -2,23 +2,9 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 
 export default function PostCard({ post, onPress }) {
-
-  // resumo com 120 caracteres
-  const resumo = post.body.length > 120
-    ? post.body.substring(0, 120) + '...'
+  const resumo = post.body.length > 80
+    ? post.body.substring(0, 80) + '...'
     : post.body;
-
-  // cor do badge (par/ímpar)
-  const badgeStyle = {
-    backgroundColor: post.userId % 2 === 0 ? '#d1fae5' : '#fee2e2'
-  };
-
-  const badgeTextStyle = {
-    color: post.userId % 2 === 0 ? '#065f46' : '#991b1b'
-  };
-
-  // data de hoje
-  const dataHoje = new Date().toLocaleDateString();
 
   return (
     <TouchableOpacity
@@ -26,14 +12,10 @@ export default function PostCard({ post, onPress }) {
       onPress={onPress}
       activeOpacity={0.85}
     >
-
       <View style={styles.cabecalho}>
-        <View style={[styles.badge, badgeStyle]}>
-          <Text style={[styles.badgeTexto, badgeTextStyle]}>
-            #{post.id}
-          </Text>
+        <View style={styles.badge}>
+          <Text style={styles.badgeTexto}>#{post.id}</Text>
         </View>
-
         <Text style={styles.titulo} numberOfLines={2}>
           {post.title}
         </Text>
@@ -43,9 +25,8 @@ export default function PostCard({ post, onPress }) {
 
       <View style={styles.rodape}>
         <Text style={styles.autor}>👤 Usuário #{post.userId}</Text>
-        <Text style={styles.data}>{dataHoje}</Text>
+        <Text style={styles.lerMais}>Ver mais →</Text>
       </View>
-
     </TouchableOpacity>
   );
 }
@@ -68,12 +49,14 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   badge: {
+    backgroundColor: '#e8f0fe',
     borderRadius: 6,
     paddingHorizontal: 8,
     paddingVertical: 3,
     marginTop: 2,
   },
   badgeTexto: {
+    color: '#1a56db',
     fontSize: 12,
     fontWeight: '700',
   },
@@ -103,8 +86,9 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#9ca3af',
   },
-  data: {
-    fontSize: 11,
-    color: '#9ca3af',
+  lerMais: {
+    fontSize: 12,
+    color: '#1a56db',
+    fontWeight: '600',
   },
 });

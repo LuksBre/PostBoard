@@ -1,12 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
- 
-// Props:
-//   icone     — emoji exibido no topo
-//   titulo    — texto principal em destaque
-//   mensagem  — texto secundário explicativo
-//   textoBotao — label do botão de ação (opcional)
-//   onBotao    — função chamada ao tocar no botão (opcional)
+
 export default function EmptyState({
   icone = '📭',
   titulo,
@@ -27,7 +21,7 @@ export default function EmptyState({
     </View>
   );
 }
- 
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
